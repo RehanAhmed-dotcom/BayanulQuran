@@ -10,14 +10,18 @@ import * as Progress from 'react-native-progress';
 import SQlite from 'react-native-sqlite-storage';
 // var db = openDatabase({name: 'Quran.db', createFromLocation: 1});
 let db;
-const Surah = ({navigation}: {navigation: any}) => {
+db = SQlite.openDatabase({name: 'Quran.db', createFromLocation: '~Quran.db'});
+const Surah = ({navigation, route}: {navigation: any; route: any}) => {
+  const [list, setList] = useState([]);
+  const {index, item} = route.params;
+  // console.log('index', index);
   const renderItem = ({item, index}: {item: any; index: any}) => (
     <TouchableOpacity
       //   onPress={() => navigation.navigate('Surah', {item})}
       style={{
         width: '90%',
         alignSelf: 'center',
-        height: 50,
+        minHeight: 50,
         marginTop: 10,
         backgroundColor: 'skyblue',
         justifyContent: 'center',
@@ -25,11 +29,11 @@ const Surah = ({navigation}: {navigation: any}) => {
         borderRadius: 10,
       }}>
       <Text style={{alignItems: 'center', color: 'black', fontWeight: 'bold'}}>
-        {index + 1} {item}
+        {index + 1} {item.AyahText}
       </Text>
     </TouchableOpacity>
   );
-
+  // console.log('item', item);
   const [pause, setPause] = useState(true);
   var track = {
     url: require('../../assets/001.mp3'), // Load media from the network
@@ -41,6 +45,7 @@ const Surah = ({navigation}: {navigation: any}) => {
     artwork: 'http://example.com/cover.png', // Load artwork from the network
     duration: 402, // Duration in seconds
   };
+  // console.log('list', list);
   useEffect(() => {
     TrackPlayer.setupPlayer().then(() => {
       TrackPlayer.add(track);
@@ -49,14 +54,7 @@ const Surah = ({navigation}: {navigation: any}) => {
   const errorCB = err => {
     console.log('SQL Error: ' + err);
   };
-  const openCB = () => {
-    console.log('hellow');
-    // db.transaction(function (txn) {
-    //   txn.executeSql('SELECT * FROM Quran', [], function (tx, res) {
-    //     console.log('res of db', res.rows.length);
-    //   });
-    // });
-  };
+  const openCB = () => {};
 
   // successCB() {
   //   console.log("SQL executed fine");
@@ -80,11 +78,32 @@ const Surah = ({navigation}: {navigation: any}) => {
   //   // });
   // }, []);
   useEffect(() => {
-    db = SQlite.openDatabase(
-      {name: 'Quran.db', createFromLocation: 1},
-      openCB,
-      errorCB,
-    );
+    db.transaction(function (txn) {
+      txn.executeSql(
+        `SELECT * FROM Quran WHERE SuraID=${index}`,
+        [],
+        (tx, results) => {
+          // alert(results);
+          //let datalength = results.row.length;
+          // alert(JSON.stringify(results));
+          // console.log('results', JSON.stringify(results));
+          var temp = [];
+          for (let i = 0; i < results.rows.length; ++i)
+            temp.push(results.rows.item(i));
+          setList(temp);
+        },
+        error => {
+          alert('execute error: ' + error.message);
+        },
+      );
+      //.catch(error => alert(error));
+      //alert('called');
+    });
+    // db.transaction(function (txn) {
+    //   txn.executeSql('SELECT * FROM Quran', [], function (tx, res) {
+    //     console.log('res of db', res.rows.length);
+    //   });
+    // });
   }, []);
   // const openCB = () => {
   //   // console.log('hello');
@@ -99,10 +118,10 @@ const Surah = ({navigation}: {navigation: any}) => {
       <Header navigation={navigation} first={false} />
       <View style={{alignItems: 'center'}}>
         <Text style={{fontWeight: 'bold', marginTop: 10, fontSize: 18}}>
-          سُوْرَۃُ {AllSurah[0].name}
+          سُوْرَۃُ {item.arabic}
         </Text>
         <View style={{height: '75%', width: '100%'}}>
-          <FlatList data={AllSurah[0].ayat} renderItem={renderItem} />
+          <FlatList data={list} renderItem={renderItem} />
         </View>
         <View
           style={{

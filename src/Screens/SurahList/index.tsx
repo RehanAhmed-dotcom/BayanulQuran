@@ -7,7 +7,7 @@ import {arr} from '../../component/SurahData';
 const SurahList = ({navigation}: {navigation: any}) => {
   const renderItem = ({item, index}: {item: any; index: any}) => (
     <TouchableOpacity
-      onPress={() => navigation.navigate('Surah', {item})}
+      onPress={() => navigation.navigate('Surah', {item, index: index + 1})}
       style={{
         width: '90%',
         alignSelf: 'center',
