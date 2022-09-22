@@ -1,9 +1,14 @@
 import React, {useEffect, useState} from 'react';
 
-import {View, Text, FlatList, TouchableOpacity} from 'react-native';
+import {View, Text, FlatList, Alert, TouchableOpacity} from 'react-native';
 import Header from '../../component/Header';
 import {AllSurah} from '../../component/SurahData';
-import TrackPlayer from 'react-native-track-player';
+import SoundPlayer from 'react-native-sound-player';
+import TrackPlayer, {
+  State,
+  usePlaybackState,
+  useProgress,
+} from 'react-native-track-player';
 import Icon from 'react-native-vector-icons/AntDesign';
 import * as Progress from 'react-native-progress';
 // import {openDatabase} from 'react-native-sqlite-storage';
@@ -13,11 +18,58 @@ let db;
 db = SQlite.openDatabase({name: 'Quran.db', createFromLocation: '~Quran.db'});
 const Surah = ({navigation, route}: {navigation: any; route: any}) => {
   const [list, setList] = useState([]);
+  const [audio, setAudio] = useState({});
+  const [pause, setPause] = useState(true);
+  const [arr, setArr] = useState([]);
+  const [have, setHave] = useState(false);
+  const [mainIndex, setMainIndex] = useState(0);
   const {index, item} = route.params;
-  // console.log('index', index);
+  const surahIndex = route.params.index;
+  const progress = useProgress();
+  const playbackState = usePlaybackState();
+  // console.log('audio', audio);
+  const run = () => {};
+  useEffect(() => {
+    console.log('new audio', audio.AudioName);
+    if (audio.AudioName) {
+      const name = audio.AudioName.slice(0, -4);
+      console.log('name', name);
+      getInfo();
+      SoundPlayer.playSoundFile(`${name}`, 'mp3');
+    }
+  }, [have]);
   const renderItem = ({item, index}: {item: any; index: any}) => (
     <TouchableOpacity
-      //   onPress={() => navigation.navigate('Surah', {item})}
+      onPress={() => {
+        setPause(true);
+        db.transaction(function (txn) {
+          txn.executeSql(
+            `SELECT * FROM BayanDetail WHERE SurahID=${surahIndex} AND AyatFrom<=${
+              index + 1
+            } AND AyatTo>=${index + 1}`,
+            [],
+            (tx, results) => {
+              // alert(results);
+              //let datalength = results.row.length;
+              // alert(JSON.stringify(results));
+              console.log('results', JSON.stringify(results));
+              var temp = [];
+              for (let i = 0; i < results.rows.length; ++i)
+                temp.push(results.rows.item(i));
+              setAudio(temp[0]);
+
+              console.log('temp data', temp);
+              setHave(!have);
+              setPause(false);
+            },
+            error => {
+              alert('execute error: ' + error.message);
+            },
+          );
+          //.catch(error => alert(error));
+          //alert('called');
+        });
+      }}
       style={{
         width: '90%',
         alignSelf: 'center',
@@ -34,49 +86,14 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
     </TouchableOpacity>
   );
   // console.log('item', item);
-  const [pause, setPause] = useState(true);
-  var track = {
-    url: require('../../assets/001.mp3'), // Load media from the network
-    title: 'Avaritia',
-    artist: 'deadmau5',
-    album: 'while(1<2)',
-    genre: 'Progressive House, Electro House',
-    date: '2014-05-20T07:00:00+00:00', // RFC 3339
-    artwork: 'http://example.com/cover.png', // Load artwork from the network
-    duration: 402, // Duration in seconds
+  const getInfo = async () => {
+    try {
+      const info = await SoundPlayer.getInfo(); // Also, you need to await this because it is async
+      console.log('get', info); // {duration: 12.416, currentTime: 7.691}
+    } catch (e) {
+      console.log('There is no song playing', e);
+    }
   };
-  // console.log('list', list);
-  useEffect(() => {
-    TrackPlayer.setupPlayer().then(() => {
-      TrackPlayer.add(track);
-    });
-  }, []);
-  const errorCB = err => {
-    console.log('SQL Error: ' + err);
-  };
-  const openCB = () => {};
-
-  // successCB() {
-  //   console.log("SQL executed fine");
-  // },
-  // useEffect(() => {
-  //   db = SQlite.openDatabase(
-  //     {
-  //       name: 'SQLite',
-  //       location: 'default',
-  //       createFromLocation: '~SQLite.db',
-  //     },
-  //     () => {},
-  //     error => {
-  //       console.log('ERROR: ' + error);
-  //     },
-  //   );
-  //   // db.transaction(function (txn) {
-  //   //   txn.executeSql('SELECT * FROM Quran', [], function (tx, res) {
-  //   //     console.log('res of db', res.rows.length);
-  //   //   });
-  //   // });
-  // }, []);
   useEffect(() => {
     db.transaction(function (txn) {
       txn.executeSql(
@@ -96,23 +113,31 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
           alert('execute error: ' + error.message);
         },
       );
-      //.catch(error => alert(error));
-      //alert('called');
     });
-    // db.transaction(function (txn) {
-    //   txn.executeSql('SELECT * FROM Quran', [], function (tx, res) {
-    //     console.log('res of db', res.rows.length);
-    //   });
-    // });
+    db.transaction(function (txn) {
+      txn.executeSql(
+        `SELECT * FROM BayanDetail WHERE SurahID=${surahIndex}`,
+        [],
+        (tx, results) => {
+          // alert(results);
+          //let datalength = results.row.length;
+          // alert(JSON.stringify(results));
+          // console.log('results', JSON.stringify(results));
+          var temp = [];
+          for (let i = 0; i < results.rows.length; ++i)
+            temp.push(results.rows.item(i));
+          setArr(temp);
+          setAudio(temp[0]);
+          setHave(!have);
+          setPause(false);
+        },
+        error => {
+          alert('execute error: ' + error.message);
+        },
+      );
+    });
   }, []);
-  // const openCB = () => {
-  //   // console.log('hello');
-  //   db.transaction(tx => {
-  //     tx.executeSql('SELECT * FROM Quran', [], (tx, results) => {
-  //       console.log('data length');
-  //     });
-  //   });
-  // };
+  // console.log('info', SoundPlayer.getIfo());
   return (
     <View style={{flex: 1}}>
       <Header navigation={navigation} first={false} />
@@ -134,15 +159,61 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
             backgroundColor: 'white',
             paddingHorizontal: 10,
           }}>
-          <Progress.Bar progress={0.3} width={200} />
-          <TouchableOpacity
-            onPress={() => {
-              setPause(!pause);
-              pause ? TrackPlayer.play() : TrackPlayer.pause();
-            }}
-            style={{alignItems: 'center', justifyContent: 'center'}}>
-            <Icon name={pause ? 'play' : 'pause'} size={30} />
-          </TouchableOpacity>
+          <View
+            style={{
+              position: 'absolute',
+              backgroundColor: 'red',
+              height: 50,
+              zIndex: 3,
+            }}></View>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text style={{marginRight: 10}}>{audio.AyatFrom}</Text>
+            <View>
+              <Progress.Bar progress={progress.position} width={200} />
+            </View>
+            <Text style={{marginLeft: 10}}>{audio.AyatTo}</Text>
+          </View>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <TouchableOpacity
+              onPress={() => {
+                setPause(true);
+                if (mainIndex > 0) {
+                  setAudio(arr[mainIndex - 1]);
+                  setHave(!have);
+                  setMainIndex(mainIndex - 1);
+                  setPause(false);
+                  // getnfo();
+                } else {
+                  alert('No file found');
+                }
+              }}
+              style={{marginRight: 10}}>
+              <Icon name="leftcircle" size={30} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setPause(!pause);
+                pause ? SoundPlayer.resume() : SoundPlayer.pause();
+              }}
+              style={{alignItems: 'center', justifyContent: 'center'}}>
+              <Icon name={pause ? 'play' : 'pausecircle'} size={30} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setPause(true);
+                if (mainIndex + 1 != arr.length) {
+                  setAudio(arr[mainIndex + 1]);
+                  setHave(!have);
+                  setMainIndex(mainIndex + 1);
+                  setPause(false);
+                } else {
+                  alert('No file found');
+                }
+              }}
+              style={{marginLeft: 10}}>
+              <Icon name="rightcircle" size={30} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </View>
