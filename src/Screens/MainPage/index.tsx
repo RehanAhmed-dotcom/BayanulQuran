@@ -2,6 +2,12 @@ import React from 'react';
 import {View, Image, Text, TouchableOpacity} from 'react-native';
 import Header from '../../component/Header';
 const MainPage = ({navigation}: {navigation: any}) => {
+  // const littleText = 'hello how are you 47';
+  // const check = e => {
+  //   return littleText.includes(`${e}`);
+  // };
+
+  // console.log('check', check('47s'));
   return (
     <View style={{flex: 1}}>
       <Header navigation={navigation} first={true} />
