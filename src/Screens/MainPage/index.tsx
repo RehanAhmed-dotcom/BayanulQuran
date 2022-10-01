@@ -1,7 +1,12 @@
 import React from 'react';
 import {View, Image, Text, TouchableOpacity} from 'react-native';
 import Header from '../../component/Header';
+import {useDispatch} from 'react-redux';
+import {logged} from '../../redux/actions';
 const MainPage = ({navigation}: {navigation: any}) => {
+  const name = {name: 'Rehan'};
+  const dispatch = useDispatch();
+
   // const littleText = 'hello how are you 47';
   // const check = e => {
   //   return littleText.includes(`${e}`);
@@ -18,7 +23,10 @@ const MainPage = ({navigation}: {navigation: any}) => {
           style={{height: 250, width: 250, resizeMode: 'contain'}}
         />
         <TouchableOpacity
-          onPress={() => navigation.navigate('SurahList')}
+          onPress={() => {
+            navigation.navigate('SurahList');
+            logged(name)(dispatch);
+          }}
           style={{
             alignItems: 'center',
             justifyContent: 'center',

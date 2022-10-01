@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 
 import {View, Text, TouchableOpacity, FlatList} from 'react-native';
-
+import {useSelector} from 'react-redux';
 import Header from '../../component/Header';
 import {arr} from '../../component/SurahData';
 const SurahList = ({navigation}: {navigation: any}) => {
@@ -23,6 +23,20 @@ const SurahList = ({navigation}: {navigation: any}) => {
       </Text>
     </TouchableOpacity>
   );
+  const {userData} = useSelector(({USER}) => USER);
+  // console.log('user in redux', userData);
+  const dummy = 3;
+  const dummyArr = [3, 5];
+  const check = () => {
+    console.log('dummy', dummy);
+    console.log('dummyarr', dummyArr);
+    if (dummyArr.includes(dummy)) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+  console.log('check', check());
   return (
     <View style={{flex: 1}}>
       <Header navigation={navigation} first={false} />

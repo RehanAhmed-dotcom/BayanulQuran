@@ -19,7 +19,9 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-
+import {PersistGate} from 'redux-persist/integration/react';
+import {Provider} from 'react-redux';
+import {Store, persistor} from './src/redux/store';
 import {
   Colors,
   DebugInstructions,
@@ -65,7 +67,14 @@ const App = () => {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
 
-  return <Root />;
+  return (
+    // <SafeAreaView style={{flex: 1}}>
+    <Provider store={Store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <Root />
+      </PersistGate>
+    </Provider>
+  );
 };
 
 const styles = StyleSheet.create({

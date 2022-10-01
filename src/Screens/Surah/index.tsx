@@ -11,6 +11,9 @@ import {
 import Header from '../../component/Header';
 import {AllSurah} from '../../component/SurahData';
 import SoundPlayer from 'react-native-sound-player';
+// import Icon from 'react-native-vector-icons/AntDesign';
+import {useDispatch, useSelector} from 'react-redux';
+import {alarmmorning} from '../../redux/actions';
 import TrackPlayer, {
   State,
   usePlaybackState,
@@ -31,11 +34,14 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
   const [audio, setAudio] = useState({});
   const [pause, setPause] = useState(true);
   const [arr, setArr] = useState([]);
+  const dispatch = useDispatch();
   const [progressbar, setProgressBar] = useState(0);
   const [have, setHave] = useState(false);
   const [mainIndex, setMainIndex] = useState(0);
   const {index, item} = route.params;
   const surahIndex = route.params.index;
+  const {Morning} = useSelector(({ALARM}) => ALARM);
+  console.log('morning', Morning);
   const progress = useProgress();
   // console.log('prog', prog);
   const searchText = e => {
@@ -49,15 +55,15 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
     // filteredName = [];
     // }
   };
-  useEffect(() => {
-    // if (!pause) {
-    const interval = setInterval(() => {
-      console.log('This will run every second!');
-      getInfo();
-    }, 1000);
-    return () => clearInterval(interval);
-    // }
-  }, []);
+  // useEffect(() => {
+  //   // if (!pause) {
+  //   const interval = setInterval(() => {
+  //     // console.log('This will run every second!');
+  //     getInfo();
+  //   }, 1000);
+  //   return () => clearInterval(interval);
+  //   // }
+  // }, []);
   const playbackState = usePlaybackState();
   // console.log('audio', list);
   const run = () => {};
@@ -70,9 +76,17 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
       SoundPlayer.playSoundFile(`${name}`, 'mp3');
     }
   }, [have]);
+  const check = id => {
+    if (Morning.includes(id)) {
+      return true;
+    } else {
+      return false;
+    }
+  };
   const renderItem = ({item, index}: {item: any; index: any}) => (
     <TouchableOpacity
       onPress={() => {
+        console.log('item in render', item);
         setPause(true);
         db.transaction(function (txn) {
           txn.executeSql(
@@ -90,6 +104,9 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
                 temp.push(results.rows.item(i));
               setAudio(temp[0]);
 
+              alarmmorning([temp[0].Field5])(dispatch);
+
+              //
               console.log('temp data', temp);
               setHave(!have);
               setPause(false);
@@ -106,13 +123,28 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
         width: '90%',
         alignSelf: 'center',
         minHeight: 50,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginTop: 10,
         backgroundColor: 'skyblue',
-        justifyContent: 'center',
+        // justifyContent: 'center',
         paddingHorizontal: 15,
         borderRadius: 10,
       }}>
-      <Text style={{alignItems: 'center', color: 'black', fontWeight: 'bold'}}>
+      {check(item.DatabaseID) ? (
+        <Icon name="left" size={20} />
+      ) : (
+        <Icon name="right" size={20} />
+      )}
+
+      <Text
+        style={{
+          alignItems: 'center',
+          // width: '85%',
+          color: 'black',
+          fontWeight: 'bold',
+        }}>
         {item.VerseID} {item.AyahText}
       </Text>
     </TouchableOpacity>
@@ -121,7 +153,7 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
   const getInfo = async () => {
     try {
       const info = await SoundPlayer.getInfo(); // Also, you need to await this because it is async
-      console.log('get', info); // {duration: 12.416, currentTime: 7.691}
+      // console.log('get', info); // {duration: 12.416, currentTime: 7.691}
       // prog = info.currentTime / info.duration;
       setProgressBar(info.currentTime / info.duration);
       // console.log('prog', prog);
@@ -164,6 +196,11 @@ const Surah = ({navigation, route}: {navigation: any; route: any}) => {
             temp.push(results.rows.item(i));
           setArr(temp);
           setAudio(temp[0]);
+
+          alarmmorning(temp[0].Field5)(dispatch);
+
+          // console.log('temp', temp[0]);
+          // alarmmorning([temp[0]])(dispatch);
           setHave(!have);
           setPause(false);
         },
